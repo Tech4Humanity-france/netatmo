@@ -556,6 +556,67 @@ class netatmo extends EventEmitter {
   }
 
   /**
+   * https://dev.netatmo.com/resources/technical/reference/energy/homesdata
+   * @param options
+   * @param callback
+   * @returns {*}
+   */
+  getHomesData(options, callback) {
+    // Wait until authenticated.
+    if (!access_token) {
+      return this.on('authenticated', function () {
+        this.getHomesData(options, callback);
+      });
+    }
+
+    const url = `${BASE_URL}/api/homesdata`;
+
+    const form = {
+      access_token: access_token
+    };
+
+    if (options != null && callback == null) {
+      callback = options;
+      options = null;
+    }
+
+    if (options) {
+      if (options.home_id) {
+        form.home_id = options.home_id;
+      }
+      if (options.device_types) {
+        form.home_id = options.device_types;
+      }
+      if (options.size) {
+        form.size = options.size;
+      }
+    }
+
+    request({
+      url: url,
+      method: "POST",
+      form: form,
+    }, (err, response, body) => {
+      if (err || response.statusCode != 200) {
+        return this.handleRequestError(err, response, body, "getHomeData error");
+      }
+
+      body = JSON.parse(body);
+
+      this.emit('get-homesdata', err, body.body);
+
+      if (callback) {
+        return callback(err, body.body);
+      }
+
+      return this;
+
+    });
+
+    return this;
+  }
+
+  /**
    * https://dev.netatmo.com/dev/resources/technical/reference/welcome/gethomedata
    * @param options
    * @param callback
@@ -612,6 +673,7 @@ class netatmo extends EventEmitter {
 
     return this;
   }
+
 
   /**
    * https://dev.netatmo.com/dev/resources/technical/reference/welcome/getnextevents
